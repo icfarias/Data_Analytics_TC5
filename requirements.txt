@@ -1,5 +1,7 @@
 streamlit
 pandas
-plotly
-prophet
-openpyxl
+os
+json
+joblib
+numpy
+seaborn
