@@ -47,7 +47,7 @@ st.sidebar.markdown(integrantes_md, unsafe_allow_html=True)
 
 # ---------- FUNÇÕES AUXILIARES ------------
 
-LIMIT_APPLICANTS = 500
+LIMIT_APPLICANTS = 300
 
 def load_json_upload(uploaded_json, limit_applicants=False):
     data = json.load(uploaded_json)
