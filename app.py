@@ -47,17 +47,14 @@ st.sidebar.markdown(integrantes_md, unsafe_allow_html=True)
 
 # ---------- FUNÇÕES AUXILIARES ------------
 
-def load_json_data(path):
-    if not os.path.exists(path):
-        st.warning(f"Arquivo '{path}' não foi encontrado.")
-        return None
-    try:
-        with open(path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        return data
-    except Exception as e:
-        st.error(f"Erro ao carregar {path}: {e}")
-        return None
+LIMIT_APPLICANTS = 500
+
+def load_json_upload(uploaded_json, limit_applicants=False):
+    data = json.load(uploaded_json)
+    if limit_applicants:
+        keys = list(data.keys())[:LIMIT_APPLICANTS] if len(data) > LIMIT_APPLICANTS else list(data.keys())
+        data = {k: data[k] for k in keys}
+    return data
 
 @st.cache_data
 def combine_dataframes(jobs_data, prospects_data, applicants_data):
@@ -105,7 +102,6 @@ def combine_dataframes(jobs_data, prospects_data, applicants_data):
     return df
 
 def run_random_forest(df):
-    # Copia para não alterar original
     df_model = df.copy()
     cols_to_drop = [
         'main_activities_job', 'technical_skills_job',
@@ -130,16 +126,14 @@ def run_random_forest(df):
     ])
     clf = Pipeline(steps=[
         ('preprocessor', preprocessor),
-        ('classifier', RandomForestClassifier(n_estimators=7, class_weight='balanced', random_state=42))
+        ('classifier', RandomForestClassifier(n_estimators=10, class_weight='balanced', random_state=42))
     ])
     X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.2, random_state=42)
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
     cm = confusion_matrix(y_test, y_pred)
     report = classification_report(y_test, y_pred, output_dict=True)
-    # Importância das features
     rf_model = clf.named_steps['classifier']
-    # Nomes das features após preprocessamento
     numeric_features = num_cols.tolist()
     cat_features_encoded = clf.named_steps['preprocessor'].named_transformers_['cat']['onehot'].get_feature_names_out(cat_cols)
     all_feature_names = np.concatenate([numeric_features, cat_features_encoded])
@@ -215,9 +209,10 @@ elif page == "📊 Exploração e Personas":
     if vaga_json and prospects_json and applicants_json:
         vagas_data = json.load(vaga_json)
         prospects_data = json.load(prospects_json)
-        applicants_data = json.load(applicants_json)
-        df = combine_dataframes(vagas_data, prospects_data, applicants_data)
+        applicants_data = load_json_upload(applicants_json, limit_applicants=True)
+        st.info(f"Utilizando {len(applicants_data)} registros de candidatos (limitado em 500 para performance).")
 
+        df = combine_dataframes(vagas_data, prospects_data, applicants_data)
         st.success(f"Dados carregados com {df.shape[0]} candidatos e {df.shape[1]} atributos.")
         st.dataframe(df.head(30), use_container_width=True)
         st.markdown("#### Download do DataFrame compilado")
@@ -243,7 +238,9 @@ elif page == "🧩 Random Forest & Importâncias":
     if vaga_json and prospects_json and applicants_json:
         vagas_data = json.load(vaga_json)
         prospects_data = json.load(prospects_json)
-        applicants_data = json.load(applicants_json)
+        applicants_data = load_json_upload(applicants_json, limit_applicants=True)
+        st.info(f"Utilizando {len(applicants_data)} registros de candidatos (limitado em 500 para performance).")
+
         df = combine_dataframes(vagas_data, prospects_data, applicants_data)
 
         st.success("Arquivos carregados: Random Forest será treinada e avaliada nos próprios dados.")
