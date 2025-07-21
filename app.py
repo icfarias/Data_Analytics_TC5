@@ -104,10 +104,15 @@ def combine_dataframes(jobs_data, prospects_data, applicants_data):
 def run_random_forest(df):
     df_model = df.copy()
     cols_to_drop = [
-        'main_activities_job', 'technical_skills_job',
-        'prospect_id', 'prospect_name', 'prospect_comment',
-        'prospect_status', 'applicant_id', 'technical_knowledge'
-    ]
+    'main_activities_job', 'technical_skills_job',
+    'prospect_id', 'prospect_name', 'prospect_comment',
+    'prospect_status', 'applicant_id', 'technical_knowledge',
+    'client', 
+    'area_of_expertise', 
+    'academic_level',     
+    'spanish_level_required', 
+    'spanish_level_applicant',
+    'english_level_required']
     df_model = df_model.drop(columns=[col for col in cols_to_drop if col in df_model.columns])
     X = df_model.drop(columns=['is_hired'])
     y = df_model['is_hired']
