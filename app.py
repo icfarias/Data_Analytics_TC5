@@ -47,7 +47,7 @@ st.sidebar.markdown(integrantes_md, unsafe_allow_html=True)
 
 # ---------- FUNÇÕES AUXILIARES ------------
 
-LIMIT_APPLICANTS = 75
+LIMIT_APPLICANTS = 50
 
 def load_json_upload(uploaded_json, limit_applicants=False):
     data = json.load(uploaded_json)
@@ -239,7 +239,7 @@ elif page == "🧩 Random Forest & Importâncias":
         vagas_data = json.load(vaga_json)
         prospects_data = json.load(prospects_json)
         applicants_data = load_json_upload(applicants_json, limit_applicants=True)
-        st.info(f"Utilizando {len(applicants_data)} registros de candidatos (limitado em 150 para performance).")
+        st.info(f"Utilizando {len(applicants_data)} registros de candidatos (limitado em 50 para performance).")
 
         df = combine_dataframes(vagas_data, prospects_data, applicants_data)
 
