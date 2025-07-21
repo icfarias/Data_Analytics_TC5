@@ -47,7 +47,7 @@ st.sidebar.markdown(integrantes_md, unsafe_allow_html=True)
 
 # ---------- FUNÇÕES AUXILIARES ------------
 
-LIMIT_APPLICANTS = 30
+LIMIT_APPLICANTS = 30  # Bem agressivo para garantir performance
 
 def load_json_upload(uploaded_json, limit_applicants=False):
     data = json.load(uploaded_json)
@@ -103,23 +103,41 @@ def combine_dataframes(jobs_data, prospects_data, applicants_data):
 
 def run_random_forest(df):
     df_model = df.copy()
-    # cols_to_drop = [
-    # 'main_activities_job', 'technical_skills_job',
-    # 'prospect_id', 'prospect_name', 'prospect_comment',
-    # 'prospect_status', 'applicant_id', 'technical_knowledge',
-    # 'client', 
-    # 'area_of_expertise', 
-    # 'academic_level',     
-    # 'spanish_level_required', 
-    # 'spanish_level_applicant',
-    # 'english_level_required']
-    # df_model = df_model.drop(columns=[col for col in cols_to_drop if col in df_model.columns])
-    columns_to_keep = [col for col in df_model.columns if df_model[col].nunique() < 20 or df_model[col].dtype != 'object']
-    df_model = df_model[columns_to_keep + ['is_hired']]
+    # Remova TUDO o que é textual ou categórico largo (adaptar conforme necessidade)
+    cols_to_drop = [
+        'main_activities_job', 'technical_skills_job',
+        'prospect_id', 'prospect_name', 'prospect_comment',
+        'prospect_status', 'applicant_id', 'technical_knowledge',
+        'client', 'job_id',    # IDs/clientes, não agregam e podem explodir NaNs
+        'area_of_expertise',   # texto potencialmente amplo
+        'academic_level',
+        'spanish_level_required', 'spanish_level_applicant',
+        'english_level_required', 'english_level_applicant'
+    ]
+    # Só mantenha as colunas alvo e poucas cols categóricas de valor reduzido
+    cols_to_keep = [c for c in df_model.columns if c not in cols_to_drop and c != 'is_hired']
+    # Mantém apenas colunas com poucos valores únicos (<15), exceto numericas
+    small_cat_cols = [
+        c for c in cols_to_keep
+        if (df_model[c].dtype == "object" and df_model[c].nunique() < 15) or
+        (df_model[c].dtype != "object")
+    ]
+    df_model = df_model[small_cat_cols + ['is_hired']]
+    st.write("Colunas finais do model:", df_model.columns.tolist())
+    st.write("Shape model final:", df_model.shape)
+    st.write("Alvo is_hired distribuição:", df_model["is_hired"].value_counts())
+
+    if df_model.empty or df_model['is_hired'].nunique() < 2:
+        st.error("Não há dados suficientes ou as duas classes (contratado/não) na base filtrada. Impossível treinar/classificar.")
+        return None, None, None, None
+
     X = df_model.drop(columns=['is_hired'])
     y = df_model['is_hired']
+
+    # Defina variáveis categóricas e numéricas após o filtro
     cat_cols = X.select_dtypes(include='object').columns
     num_cols = X.select_dtypes(exclude='object').columns
+
     numeric_transformer = Pipeline(steps=[
         ('imputer', SimpleImputer(strategy='most_frequent'))
     ])
@@ -135,20 +153,28 @@ def run_random_forest(df):
         ('preprocessor', preprocessor),
         ('classifier', RandomForestClassifier(n_estimators=3, class_weight='balanced', random_state=42))
     ])
-    X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.2, random_state=42)
-    clf.fit(X_train, y_train)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.4, random_state=42)
 
-    y_test = np.array(y_test).ravel()
-    y_pred = np.array(y_pred).ravel()
-    if len(np.unique(y_test)) < 2:
-        st.error("Não há ao menos duas classes na variável alvo para avaliar a matriz de confusão! Verifique os filtros e dados de entrada.")
+    # Checagem mínima para evitar erro no confusion_matrix
+    import numpy as np
+    y_test_array = np.array(y_test).ravel()
+    if len(np.unique(y_test_array)) < 2:
+        st.error("Após split, só há uma classe na base de teste! Impossível gerar matriz de confusão.")
         return None, None, None, None
+
+    clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
-    cm = confusion_matrix(y_test, y_pred)
-    report = classification_report(y_test, y_pred, output_dict=True)
+    y_pred = np.array(y_pred).ravel()
+    cm = confusion_matrix(y_test_array, y_pred)
+    report = classification_report(y_test_array, y_pred, output_dict=True)
     rf_model = clf.named_steps['classifier']
+
+    # Names das features após preprocessamento
     numeric_features = num_cols.tolist()
-    cat_features_encoded = clf.named_steps['preprocessor'].named_transformers_['cat']['onehot'].get_feature_names_out(cat_cols)
+    if len(cat_cols) > 0:
+        cat_features_encoded = clf.named_steps['preprocessor'].named_transformers_['cat']['onehot'].get_feature_names_out(cat_cols)
+    else:
+        cat_features_encoded = []
     all_feature_names = np.concatenate([numeric_features, cat_features_encoded])
     importances = rf_model.feature_importances_
     feature_importance_df = pd.DataFrame({
@@ -166,7 +192,7 @@ def plot_confusion_matrix(cm):
     st.pyplot(fig)
 
 def plot_feature_importances(feature_importance_df, top_n=15):
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(7, top_n // 2 + 2))
     sns.barplot(
         data=feature_importance_df.head(top_n),
         x='importance',
@@ -223,11 +249,13 @@ elif page == "📊 Exploração e Personas":
         vagas_data = json.load(vaga_json)
         prospects_data = json.load(prospects_json)
         applicants_data = load_json_upload(applicants_json, limit_applicants=True)
-        st.info(f"Utilizando {len(applicants_data)} registros de candidatos (limitado em 500 para performance).")
+        st.info(f"Utilizando {len(applicants_data)} registros de candidatos (limitado em {LIMIT_APPLICANTS} para performance).")
 
         df = combine_dataframes(vagas_data, prospects_data, applicants_data)
         st.success(f"Dados carregados com {df.shape[0]} candidatos e {df.shape[1]} atributos.")
         st.dataframe(df.head(30), use_container_width=True)
+        st.write("Tipo de colunas:", dict(zip(df.columns, df.dtypes)))
+
         st.markdown("#### Download do DataFrame compilado")
         st.download_button("Baixar CSV", data=df.to_csv(index=False), file_name="candidatos_combinados.csv", mime="text/csv")
 
@@ -252,28 +280,38 @@ elif page == "🧩 Random Forest & Importâncias":
         vagas_data = json.load(vaga_json)
         prospects_data = json.load(prospects_json)
         applicants_data = load_json_upload(applicants_json, limit_applicants=True)
-        st.info(f"Utilizando {len(applicants_data)} registros de candidatos (limitado em 50 para performance).")
+        st.info(f"Utilizando {len(applicants_data)} registros de candidatos (limitado em {LIMIT_APPLICANTS} para performance).")
 
         df = combine_dataframes(vagas_data, prospects_data, applicants_data)
 
         st.success("Arquivos carregados: Random Forest será treinada e avaliada nos próprios dados.")
         with st.spinner("Treinando modelo Random Forest..."):
             clf, cm, report, feature_importance_df = run_random_forest(df)
-        st.markdown("#### Desempenho do Modelo")
-        plot_confusion_matrix(cm)
+        
+        if clf is None:
+            st.stop()
 
-        st.markdown("**Classification report:**")
-        st.json({k: report[k] for k in ['0', '1', 'accuracy', 'macro avg', 'weighted avg']})
+        st.markdown("#### Desempenho do Modelo")
+        if cm is not None:
+            plot_confusion_matrix(cm)
+
+        if report is not None:
+            st.markdown("**Classification report:**")
+            st.json({k: report[k] for k in ['0', '1', 'accuracy', 'macro avg', 'weighted avg']})
 
         st.markdown("#### Principais Fatores Decisivos (Top 15)")
-        plot_feature_importances(feature_importance_df)
-        st.info("A interpretação dos fatores principais pode indicar o 'perfil ideal' do candidato para as contratações históricas.")
+        if feature_importance_df is not None:
+            plot_feature_importances(feature_importance_df)
+            st.info("A interpretação dos fatores principais pode indicar o 'perfil ideal' do candidato para as contratações históricas.")
 
         st.markdown("---")
         # Download do modelo treinado (opcional)
         model_filename = "random_forest_model.pkl"
-        joblib.dump(clf, model_filename)
-        with open(model_filename, "rb") as f:
-            st.download_button("Baixar modelo Random Forest treinado (.pkl)", data=f, file_name=model_filename)
+        try:
+            joblib.dump(clf, model_filename)
+            with open(model_filename, "rb") as f:
+                st.download_button("Baixar modelo Random Forest treinado (.pkl)", data=f, file_name=model_filename)
+        except Exception as e:
+            st.warning(f"Não foi possível salvar modelo: {e}")
     else:
         st.info("Faça upload dos 3 arquivos (.json) necessários para treinar e avaliar a Random Forest.")
