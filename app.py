@@ -113,11 +113,12 @@ def run_random_forest(df):
     ]
     # Só mantenha as colunas alvo e poucas cols categóricas de valor reduzido
     cols_to_keep = [c for c in df_model.columns if c not in cols_to_drop and c != 'is_hired']
-    # Mantém apenas colunas com poucos valores únicos (<15), exceto numericas
+    # Mantém apenas colunas com poucos valores únicos (<30)
     small_cat_cols = [
-        c for c in cols_to_keep
-        if (df_model[c].dtype == "object" and df_model[c].nunique() < 70) or
-        (df_model[c].dtype != "object")
+    c for c in cols_to_keep
+    if (df_model[c].dtype == "object" and df_model[c].nunique() < 30) or
+       (df_model[c].dtype != "object") or
+       (c == 'area_of_expertise')  
     ]
     df_model = df_model[small_cat_cols + ['is_hired']]
     st.write("Colunas finais do model:", df_model.columns.tolist())
