@@ -47,7 +47,7 @@ st.sidebar.markdown(integrantes_md, unsafe_allow_html=True)
 
 # ---------- FUNÇÕES AUXILIARES ------------
 
-LIMIT_APPLICANTS = 1000  
+LIMIT_APPLICANTS = 5000  
 
 def load_json_upload(uploaded_json, limit_applicants=False):
     data = json.load(uploaded_json)
@@ -113,10 +113,10 @@ def run_random_forest(df):
     ]
     # Só mantenha as colunas alvo e poucas cols categóricas de valor reduzido
     cols_to_keep = [c for c in df_model.columns if c not in cols_to_drop and c != 'is_hired']
-    # Mantém apenas colunas com poucos valores únicos (<20)
+    # Mantém apenas colunas com poucos valores únicos (<15)
     small_cat_cols = [
     c for c in cols_to_keep
-    if (df_model[c].dtype == "object" and df_model[c].nunique() < 20) or
+    if (df_model[c].dtype == "object" and df_model[c].nunique() < 15) or
        (df_model[c].dtype != "object") or
        (c == 'area_of_expertise')  
     ]
@@ -149,7 +149,7 @@ def run_random_forest(df):
     ])
     clf = Pipeline(steps=[
         ('preprocessor', preprocessor),
-        ('classifier', RandomForestClassifier(n_estimators=10, class_weight='balanced', random_state=42))
+        ('classifier', RandomForestClassifier(n_estimators=7, class_weight='balanced', random_state=42))
     ])
     X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.3, random_state=42)
 
