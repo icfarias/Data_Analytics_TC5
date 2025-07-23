@@ -27,7 +27,7 @@ st.markdown("---")
 st.sidebar.title("Menu")
 page = st.sidebar.radio(
     "Navegação",
-    ["🏠 Introdução", "📊 Exploração e Personas", "🧩 Random Forest & Importâncias"],
+    ["🏠 Introdução", "📊 Exploração e Pessoas", "🧩 Random Forest & Importâncias de habilidades"],
     index=0
 )
 
@@ -47,7 +47,7 @@ st.sidebar.markdown(integrantes_md, unsafe_allow_html=True)
 
 # ---------- FUNÇÕES AUXILIARES ------------
 
-LIMIT_APPLICANTS = 7000  
+LIMIT_APPLICANTS = 10000  
 
 def load_json_upload(uploaded_json, limit_applicants=False):
     data = json.load(uploaded_json)
