@@ -47,7 +47,7 @@ st.sidebar.markdown(integrantes_md, unsafe_allow_html=True)
 
 # ---------- FUNÇÕES AUXILIARES ------------
 
-LIMIT_APPLICANTS = 100  # Bem agressivo para garantir performance
+LIMIT_APPLICANTS = 500  # Bem agressivo para garantir performance
 
 def load_json_upload(uploaded_json, limit_applicants=False):
     data = json.load(uploaded_json)
@@ -116,7 +116,7 @@ def run_random_forest(df):
     # Mantém apenas colunas com poucos valores únicos (<15), exceto numericas
     small_cat_cols = [
         c for c in cols_to_keep
-        if (df_model[c].dtype == "object" and df_model[c].nunique() < 50) or
+        if (df_model[c].dtype == "object" and df_model[c].nunique() < 70) or
         (df_model[c].dtype != "object")
     ]
     df_model = df_model[small_cat_cols + ['is_hired']]
@@ -252,7 +252,7 @@ elif page == "📊 Exploração e Personas":
         df = combine_dataframes(vagas_data, prospects_data, applicants_data)
         st.success(f"Dados carregados com {df.shape[0]} candidatos e {df.shape[1]} atributos.")
         st.dataframe(df.head(30), use_container_width=True)
-        st.write("Tipo de colunas:", dict(zip(df.columns, df.dtypes)))
+        # st.write("Tipo de colunas:", dict(zip(df.columns, df.dtypes)))
 
         st.markdown("#### Download do DataFrame compilado")
         st.download_button("Baixar CSV", data=df.to_csv(index=False), file_name="candidatos_combinados.csv", mime="text/csv")
