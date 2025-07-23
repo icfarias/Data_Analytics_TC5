@@ -258,13 +258,13 @@ elif page == "📊 Exploração e Personas":
         st.markdown("#### Download do DataFrame compilado")
         st.download_button("Baixar CSV", data=df.to_csv(index=False), file_name="candidatos_combinados.csv", mime="text/csv")
 
-#         st.markdown("---")
-#         st.markdown("### Top 5 Personas Contratados (3 fatores combinados)")
-#         df_personas = personas_table(df)
-#         st.table(df_personas)
-#         st.info("""
-# Cada linha representa um perfil de candidato mais frequentemente contratado — agrupando nível profissional requerido, nível de inglês informado e área de atuação.
-#         """)
+        st.markdown("---")
+        st.markdown("### Top 5 Personas Contratados (3 fatores combinados)")
+        df_personas = personas_table(df)
+        st.table(df_personas)
+        st.info("""
+Cada linha representa um perfil de candidato mais frequentemente contratado — agrupando nível profissional requerido, nível de inglês informado e área de atuação.
+        """)
     else:
         st.info("Faça upload dos 3 arquivos (.json) necessários para análise.")
 
