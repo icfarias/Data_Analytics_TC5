@@ -235,7 +235,7 @@ O objetivo principal é mostrar, por meio da análise de dados e machine learnin
     st.info("Use o menu lateral para carregar e explorar os dados, visualizar personas e interpretar a IA!")
 
 # ------ PAGE 2: EXPLORAÇÃO E PERSONAS ------
-elif page == "📊 Exploração e Personas":
+elif page == "📊 Exploração e Pessoas":
     st.title("📊 Exploração dos Dados de Candidatos")
 
     col_u, col_x, col_y = st.columns([2,1,2])
@@ -269,7 +269,7 @@ Cada linha representa um perfil de candidato mais frequentemente contratado — 
         st.info("Faça upload dos 3 arquivos (.json) necessários para análise.")
 
 # ------ PAGE 3: RANDOM FOREST, MATRIZ E FEAT IMPORTANCE ------
-elif page == "🧩 Random Forest & Importâncias":
+elif page == "🧩 Random Forest & Importâncias de habilidades":
     st.title("🧩 Random Forest – Fatores Decisivos na Contratação")
     vaga_json = st.file_uploader("🗂️ Upload vagas.json", type="json", key="vagas_rf")
     prospects_json = st.file_uploader("🗂️ Upload prospects.json", type="json", key="prospects_rf")
