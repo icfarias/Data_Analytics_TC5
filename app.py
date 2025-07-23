@@ -108,13 +108,13 @@ def run_random_forest(df):
         'main_activities_job', 'technical_skills_job',
         'prospect_id', 'prospect_name', 'prospect_comment',
         'prospect_status', 'applicant_id', 'technical_knowledge',
-        'client', 'job_id',    # IDs/clientes, não agregam e podem explodir NaNs
-        'area_of_expertise',   # texto potencialmente amplo
+        'client', 'job_id',   # não agregam e podem explodir NaNs
+        #'area_of_expertise', 
         'academic_level'
     ]
     # Só mantenha as colunas alvo e poucas cols categóricas de valor reduzido
     cols_to_keep = [c for c in df_model.columns if c not in cols_to_drop and c != 'is_hired']
-    # Mantém apenas colunas com poucos valores únicos (<15), exceto numericas
+    # Mantém apenas colunas com poucos valores únicos (<30), exceto numericas
     small_cat_cols = [
         c for c in cols_to_keep
         if (df_model[c].dtype == "object" and df_model[c].nunique() < 30) or
