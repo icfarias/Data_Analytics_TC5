@@ -109,7 +109,7 @@ def run_random_forest(df):
         'prospect_id', 'prospect_name', 'prospect_comment',
         'prospect_status', 'applicant_id', 'technical_knowledge',
         'client', 'job_id',   # não agregam e podem explodir NaNs
-        #'area_of_expertise', 
+        'area_of_expertise', 
         'academic_level'
     ]
     # Só mantenha as colunas alvo e poucas cols categóricas de valor reduzido
@@ -117,7 +117,7 @@ def run_random_forest(df):
     # Mantém apenas colunas com poucos valores únicos (<30), exceto numericas
     small_cat_cols = [
         c for c in cols_to_keep
-        if (df_model[c].dtype == "object" and df_model[c].nunique() < 30) or
+        if (df_model[c].dtype == "object" and df_model[c].nunique() < 25) or
         (df_model[c].dtype != "object")
     ]
     df_model = df_model[small_cat_cols + ['is_hired']]
@@ -209,13 +209,11 @@ def personas_table(df):
         (df['is_hired'] == 1) &
         (df['professional_level_required'].notna()) &
         (df['english_level_applicant'].notna()) &
-        (df['area_of_expertise'].notna()) &
-        (df['english_level_applicant'].astype(str).str.strip() != '') &
-        (df['area_of_expertise'].astype(str).str.strip() != '')
+        (df['english_level_applicant'].astype(str).str.strip() != '')
     ]
     personas_3d = (
         df_hired_3d
-        .groupby(['professional_level_required', 'english_level_applicant', 'area_of_expertise'])
+        .groupby(['professional_level_required', 'english_level_applicant'])
         .size()
         .reset_index(name='num_contratados')
         .sort_values(by='num_contratados', ascending=False)
