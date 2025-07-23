@@ -112,7 +112,7 @@ def run_random_forest(df):
     #     'area_of_expertise',   # texto potencialmente amplo
     #     'academic_level'
     # ]
-        cols_to_drop = [
+    cols_to_drop = [
         'main_activities_job', 'technical_skills_job',
         'prospect_id', 'prospect_name', 'prospect_comment',
         'prospect_status', 'applicant_id', 'technical_knowledge'
