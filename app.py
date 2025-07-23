@@ -47,7 +47,7 @@ st.sidebar.markdown(integrantes_md, unsafe_allow_html=True)
 
 # ---------- FUNÇÕES AUXILIARES ------------
 
-LIMIT_APPLICANTS = 30  # Bem agressivo para garantir performance
+LIMIT_APPLICANTS = 50  # Bem agressivo para garantir performance
 
 def load_json_upload(uploaded_json, limit_applicants=False):
     data = json.load(uploaded_json)
@@ -104,13 +104,18 @@ def combine_dataframes(jobs_data, prospects_data, applicants_data):
 def run_random_forest(df):
     df_model = df.copy()
     # Remova TUDO o que é textual ou categórico largo (adaptar conforme necessidade)
-    cols_to_drop = [
+    # cols_to_drop = [
+    #     'main_activities_job', 'technical_skills_job',
+    #     'prospect_id', 'prospect_name', 'prospect_comment',
+    #     'prospect_status', 'applicant_id', 'technical_knowledge',
+    #     'client', 'job_id',    # IDs/clientes, não agregam e podem explodir NaNs
+    #     'area_of_expertise',   # texto potencialmente amplo
+    #     'academic_level'
+    # ]
+        cols_to_drop = [
         'main_activities_job', 'technical_skills_job',
         'prospect_id', 'prospect_name', 'prospect_comment',
-        'prospect_status', 'applicant_id', 'technical_knowledge',
-        'client', 'job_id',    # IDs/clientes, não agregam e podem explodir NaNs
-        'area_of_expertise',   # texto potencialmente amplo
-        'academic_level'
+        'prospect_status', 'applicant_id', 'technical_knowledge'
     ]
     # Só mantenha as colunas alvo e poucas cols categóricas de valor reduzido
     cols_to_keep = [c for c in df_model.columns if c not in cols_to_drop and c != 'is_hired']
