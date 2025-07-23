@@ -149,7 +149,7 @@ def run_random_forest(df):
     ])
     clf = Pipeline(steps=[
         ('preprocessor', preprocessor),
-        ('classifier', RandomForestClassifier(n_estimators=8, class_weight='balanced', random_state=42))
+        ('classifier', RandomForestClassifier(n_estimators=7, class_weight='balanced', random_state=42))
     ])
     X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.35, random_state=42)
 
